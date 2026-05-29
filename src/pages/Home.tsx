@@ -80,7 +80,7 @@ const Home = () => {
       {/* Stats strip — OG Sikkanam vibe */}
       <section className="px-5 md:px-0 mt-6 md:mt-10">
         <div className="grid grid-cols-3 gap-2 md:gap-6 bg-card border border-border rounded-2xl p-4 md:p-6 shadow-card">
-          <Stat value={`${tnDestinations.length}+`} label="Destinations" />
+          <Stat value={`${tnDestinations.length}`} label="Destinations" />
           <Stat value="₹0" label="Booking fee" />
           <Stat value="100%" label="Tamil Nadu" />
         </div>

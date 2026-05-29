@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { type TripPlan, generateShareText } from "@/lib/tripPlanner";
 import { categoryLabels } from "@/data/tnDestinations";
 import { Share2, Printer, Map, Train, Bus, Car, Star, Utensils, Building2, Navigation, AlertCircle, CheckCircle2 } from "lucide-react";
-
+import { HOTEL_RANGES } from "@/lib/hotelPrices";
 interface TripResultsProps {
   plan: TripPlan;
 }
@@ -78,7 +78,11 @@ const TripResults = forwardRef<HTMLDivElement, TripResultsProps>(({ plan }, ref)
                   {modeIcon(leg.mode)}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-foreground">{leg.from} → {leg.to}</p>
+                  <p className="font-medium text-foreground">
+                    {leg.mode === "train" && leg.fromStation && leg.toStation
+                      ? `${leg.fromStation} (${leg.from}) → ${leg.toStation} (${leg.to})`
+                      : `${leg.from} → ${leg.to}`}
+                  </p>
                   <p className="text-sm text-muted-foreground">{leg.mode.toUpperCase()} · {leg.distanceKm} km · {leg.duration}{leg.frequency ? ` · ${leg.frequency}` : ""}</p>
                   {leg.note && <p className="text-xs text-muted-foreground mt-1">{leg.note}</p>}
                 </div>
@@ -151,31 +155,53 @@ const TripResults = forwardRef<HTMLDivElement, TripResultsProps>(({ plan }, ref)
         {/* Hotels */}
         <div className="bg-card rounded-2xl shadow-card p-6 mb-6">
           <h3 className="font-display text-xl font-bold text-foreground mb-4">🏨 Recommended Hotels</h3>
-          {plan.hotels.length === 0 ? (
-            <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
-              This looks like a day-trip style plan, so Sikkanam skips hotel recommendations to keep the budget efficient.
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {plan.hotels.map((hotel, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border hover:shadow-card transition-shadow">
-                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-muted-foreground" />
+          {(() => {
+            const nights = Math.max(plan.input.days - 1, 0);
+            if (nights === 0) {
+              return (
+                <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  Day trip detected. No hotel stay required.
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground truncate">{hotel.name}</p>
-                  <p className="text-sm text-muted-foreground">{hotel.distanceKm} km from centre · {hotel.tier} · target-friendly {hotel.pricePerNight <= plan.budget.hotelPerNight * 1.15 ? "yes" : "stretch"}</p>
+              );
+            }
+            if (plan.hotels.length === 0) {
+              return (
+                <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  No nearby hotels were found for this destination. Accommodation budget estimates are still included.
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-bold text-primary">₹{hotel.pricePerNight}/night</p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 justify-end">
-                    <Star className="w-3 h-3 fill-primary text-primary" /> {hotel.rating}
-                  </p>
-                </div>
+              );
+            }
+            return (
+              <div className="grid gap-3">
+                {plan.hotels.map((hotel, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border hover:shadow-card transition-shadow">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{hotel.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {hotel.distanceKm} km from centre · {hotel.tier} · {" "}
+                        {HOTEL_RANGES[hotel.priceCategory].min <= plan.budget.hotelPerNight * 1.15 ? (
+                          <span className="text-emerald-600 font-semibold dark:text-emerald-400">Fits Your Budget</span>
+                        ) : (
+                          <span className="text-amber-600 font-semibold dark:text-amber-400">Stretch Budget</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-primary">
+                        ₹{HOTEL_RANGES[hotel.priceCategory].min}–₹{HOTEL_RANGES[hotel.priceCategory].max}
+                      </p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 justify-end">
+                        <Star className="w-3 h-3 fill-primary text-primary" /> {hotel.rating}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              ))}
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Attractions */}

@@ -9,10 +9,16 @@ export interface TNDestination {
 }
 export interface Hotel {
   name: string;
-  pricePerNight: number;
+  pricePerNight?: number;
+  priceCategory?: "budget" | "standard" | "comfort" | "premium";
   rating: number;
   distanceKm: number;
-  tier: "budget" | "standard" | "comfort";
+  tier: string;
+  // Backward compatibility fields from hotelservice.ts
+  type?: string;
+  amenities?: string[];
+  lat?: number;
+  lng?: number;
 }
 
 export type Destination = TNDestination;
