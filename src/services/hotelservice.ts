@@ -1,3 +1,6 @@
+import { getDistance, getDestinationById, type Hotel } from "@/data/tnDestinations";
+import { HOTEL_FALLBACKS } from "@/data/hotelFallbacks";
+
 function getPriceCategory(hotel: any) {
   const name = (
     hotel.tags?.name ||
@@ -45,26 +48,14 @@ function getPriceCategory(hotel: any) {
   return "standard";
 }
 
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c;
-  return parseFloat(d.toFixed(1)); // Return to 1 decimal place (e.g. 1.2)
-}
+const QUALITY_SCORE: Record<string, number> = {
+  premium: 4,
+  comfort: 3,
+  standard: 2,
+  budget: 1,
+};
 
-export async function getNearbyHotels(
-  lat: number,
-  lng: number
-) {
+export async function getNearbyHotels(destId: string, lat: number, lng: number): Promise<Hotel[]> {
   // Query nwr (nodes, ways, relations) and use "out center" to automatically get centers for polygons
   const query = `
     [out:json];
@@ -91,11 +82,14 @@ export async function getNearbyHotels(
 
     const data = await res.json();
 
-    return data.elements.map((hotel: any) => {
+    const mapped = (data.elements || []).map((hotel: any) => {
       const category = getPriceCategory(hotel);
       const hotelLat = hotel.lat || hotel.center?.lat;
       const hotelLon = hotel.lon || hotel.center?.lon;
-      const distance = calculateDistance(lat, lng, hotelLat, hotelLon);
+
+      if (!hotelLat || !hotelLon) return null;
+
+      const distance = getDistance(lat, lng, hotelLat, hotelLon);
 
       // Generate a stable realistic rating between 3.8 and 4.7 based on the element ID
       const baseId = hotel.id || 100;
@@ -117,9 +111,9 @@ export async function getNearbyHotels(
             ? "budget"
             : "standard",
 
-        priceCategory: category,
+        priceCategory: category as any,
         tier: category.charAt(0).toUpperCase() + category.slice(1),
-        distanceKm: distance,
+        distanceKm: parseFloat(distance.toFixed(1)),
 
         rating: rating,
 
@@ -130,16 +124,115 @@ export async function getNearbyHotels(
 
         lat: hotelLat,
         lng: hotelLon,
-      };
+      } as Hotel;
     })
-    .filter((hotel: any) => hotel.name && hotel.lat && hotel.lng)
-    .slice(0, 6);
-  } catch (err) {
-    console.error(
-      "Hotel fetch failed:",
-      err
-    );
+    .filter((h: any) => h && h.name && typeof h.lat === "number" && typeof h.lng === "number");
 
-    return [];
+    // Deduplicate by name+coords, prefer closer/higher-rated
+    const uniqueMap = new Map<string, Hotel>();
+    for (const h of mapped) {
+      const key = `${(h.name || "").toLowerCase()}|${h.lat}|${h.lng}`;
+      const existing = uniqueMap.get(key);
+      if (!existing) {
+        uniqueMap.set(key, h);
+      } else {
+        // prefer higher rating or closer distance
+        if (h.rating > existing.rating || h.distanceKm < existing.distanceKm) {
+          uniqueMap.set(key, h);
+        }
+      }
+    }
+
+    const unique = Array.from(uniqueMap.values());
+
+    unique.sort((a, b) => {
+      if (a.distanceKm !== b.distanceKm) return a.distanceKm - b.distanceKm;
+      return (QUALITY_SCORE[b.priceCategory as string] || 0) - (QUALITY_SCORE[a.priceCategory as string] || 0);
+    });
+
+    if (unique.length > 0) return unique.slice(0, 6);
+
+    // Fallback: curated list
+    const curated = HOTEL_FALLBACKS[destId] || [];
+    if (curated.length > 0) {
+      const fallbackHotels: Hotel[] = curated.map((entry, idx) => {
+        const offset = 0.01 * (idx + 1);
+        const hotelLat = lat + offset;
+        const hotelLng = lng + (offset * ((idx % 2 === 0) ? 1 : -1));
+        const distance = getDistance(lat, lng, hotelLat, hotelLng);
+        const priceCategory = entry.priceCategory || "standard";
+        return {
+          name: entry.name,
+          type: entry.type || "standard",
+          priceCategory: priceCategory as any,
+          tier: (priceCategory.charAt(0).toUpperCase() + priceCategory.slice(1)),
+          distanceKm: parseFloat(distance.toFixed(1)),
+          rating: entry.rating || 4.0,
+          amenities: entry.amenities || ["WiFi"],
+          lat: hotelLat,
+          lng: hotelLng,
+        };
+      });
+
+      fallbackHotels.sort((a, b) => a.distanceKm - b.distanceKm);
+      return fallbackHotels.slice(0, 3);
+    }
+
+    // Final fallback: booking provider suggestion (synthetic)
+    const dest = getDestinationById(destId);
+    const suggestion: Hotel = {
+      name: `Search hotels for ${dest?.name || destId} on booking platforms`,
+      priceCategory: "standard",
+      tier: "Standard",
+      distanceKm: 1.0,
+      rating: 4.0,
+      amenities: ["Search"],
+      lat: lat + 0.01,
+      lng: lng + 0.01,
+    };
+
+    return [suggestion];
+  } catch (err) {
+    console.error("Hotel fetch failed:", err);
+
+    // On fetch failure, attempt curated fallback
+    const curated = HOTEL_FALLBACKS[destId] || [];
+    if (curated.length > 0) {
+      const fallbackHotels: Hotel[] = curated.map((entry, idx) => {
+        const offset = 0.01 * (idx + 1);
+        const hotelLat = lat + offset;
+        const hotelLng = lng + (offset * ((idx % 2 === 0) ? 1 : -1));
+        const distance = getDistance(lat, lng, hotelLat, hotelLng);
+        const priceCategory = entry.priceCategory || "standard";
+        return {
+          name: entry.name,
+          type: entry.type || "standard",
+          priceCategory: priceCategory as any,
+          tier: (priceCategory.charAt(0).toUpperCase() + priceCategory.slice(1)),
+          distanceKm: parseFloat(distance.toFixed(1)),
+          rating: entry.rating || 4.0,
+          amenities: entry.amenities || ["WiFi"],
+          lat: hotelLat,
+          lng: hotelLng,
+        };
+      });
+
+      fallbackHotels.sort((a, b) => a.distanceKm - b.distanceKm);
+      return fallbackHotels.slice(0, 3);
+    }
+
+    // Final fallback suggestion
+    const suggestion: Hotel = {
+      name: `Search hotels near this destination`,
+      priceCategory: "standard",
+      tier: "Standard",
+      distanceKm: 1.0,
+      rating: 4.0,
+      amenities: ["Search"],
+      lat: lat + 0.01,
+      lng: lng + 0.01,
+    };
+
+    return [suggestion];
   }
 }

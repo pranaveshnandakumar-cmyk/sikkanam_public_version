@@ -251,8 +251,12 @@ function buildDirectTrainRoute(
   destinationName: string,
   sourceStation: string,
   destinationStation: string,
-  distanceKm: number
+  distanceKm: number,
+  sourceHasRail: boolean,
+  destHasRail: boolean
 ): RouteCandidate | null {
+  // Validate: only generate direct train if BOTH endpoints have rail access
+  if (!sourceHasRail || !destHasRail) return null;
   if (distanceKm < 140) return null;
 
   return {
@@ -283,9 +287,15 @@ function buildGatewayRoute(
   gateway: GatewayConfig,
   primaryMode: "bus" | "train",
   sourceStation?: string,
+  sourceHasRail?: boolean,
 ): RouteCandidate | null {
   const mainDistance = Math.max(50, totalDistance - gateway.lastMileKm);
-  if (primaryMode === "train" && mainDistance < 140) return null;
+  
+  // If using train as primary leg, validate source has rail access
+  if (primaryMode === "train") {
+    if (!sourceHasRail) return null;
+    if (mainDistance < 140) return null;
+  }
 
   const firstLegCost = getTransportCost(mainDistance, primaryMode);
   const lastMileCost = getTransportCost(gateway.lastMileKm, gateway.lastMileMode);
@@ -363,13 +373,15 @@ function calculateRoute(source: string, destination: string, style: TravelStyle)
     dstDest.name,
     srcDest.nearestStation,
     dstDest.nearestStation,
-    distance
+    distance,
+    srcDest.hasRailAccess,
+    dstDest.hasRailAccess
   );
   if (directTrain) options.push(directTrain);
 
   if (gateway) {
     const busViaGateway = buildGatewayRoute(srcDest.name, dstDest.name, distance, gateway, "bus");
-    const trainViaGateway = buildGatewayRoute(srcDest.name, dstDest.name, distance, gateway, "train", srcDest.nearestStation);
+    const trainViaGateway = buildGatewayRoute(srcDest.name, dstDest.name, distance, gateway, "train", srcDest.nearestStation, srcDest.hasRailAccess);
     if (busViaGateway) options.push(busViaGateway);
     if (trainViaGateway) options.push(trainViaGateway);
   }
@@ -510,13 +522,14 @@ export async function generateTripPlan(input: TripInput): Promise<TripPlan> {
  const targetHotelBudget = nights > 0 ? targets.hotel : 0;
   const rooms = nights > 0 ? Math.ceil(input.travellers / getRoomCapacity(input.style)) : 0;
   const hotelPerNight = nights > 0 && rooms > 0 ? roundCurrency(targetHotelBudget / nights / rooms) : 0;
- const hotels =
-  nights > 0
-    ? await getNearbyHotels(
-        dest.lat,
-        dest.lng
-      )
-    : [];
+  const hotels =
+   nights > 0
+     ? await getNearbyHotels(
+         dest.id,
+         dest.lat,
+         dest.lng
+       )
+     : [];
 
   console.log(`[Hotel Audit] Destination: ${dest.name} | Lat: ${dest.lat} | Lng: ${dest.lng} | Nights: ${nights} | Loaded Hotels: ${hotels.length}`);
 

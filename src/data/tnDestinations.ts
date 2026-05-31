@@ -4,7 +4,7 @@ export type DestinationCategory = 'hill' | 'beach' | 'temple' | 'city' | 'herita
 export interface TNDestination {
   id: string; name: string; fullName: string; category: DestinationCategory;
   emoji: string; district: string; description: string; attractions: string[];
-  nearestStation: string; lat: number; lng: number;
+  nearestStation: string; hasRailAccess: boolean; lat: number; lng: number;
   hotels?: Hotel[]; // Optional hotels field for trip planning
 }
 export interface Hotel {
@@ -44,6 +44,7 @@ export const tnDestinations: TNDestination[] = [
       "Coonoor Tea Factory ☕"
     ],
     "nearestStation": "Mettupalayam",
+    "hasRailAccess": false,
     "lat": 11.41,
     "lng": 76.69
   },
@@ -68,6 +69,7 @@ export const tnDestinations: TNDestination[] = [
       "Pambar Falls 🌊"
     ],
     "nearestStation": "Dindigul Junction",
+    "hasRailAccess": false,
     "lat": 10.24,
     "lng": 77.49
   },
@@ -92,6 +94,7 @@ export const tnDestinations: TNDestination[] = [
       "Spider Cave 🕷️"
     ],
     "nearestStation": "Salem Junction / Erode Junction",
+    "hasRailAccess": false,
     "lat": 11.77,
     "lng": 78.2
   },
@@ -116,6 +119,7 @@ export const tnDestinations: TNDestination[] = [
       "Vel Murugan Temple 🛕"
     ],
     "nearestStation": "Jolarpettai",
+    "hasRailAccess": false,
     "lat": 12.58,
     "lng": 78.64
   },
@@ -138,6 +142,7 @@ export const tnDestinations: TNDestination[] = [
       "Botanical Garden 🌸"
     ],
     "nearestStation": "Salem Junction",
+    "hasRailAccess": false,
     "lat": 11.25,
     "lng": 78.34
   },
@@ -160,6 +165,7 @@ export const tnDestinations: TNDestination[] = [
       "Lion-Tailed Macaque Spotting 🐒"
     ],
     "nearestStation": "Pollachi",
+    "hasRailAccess": false,
     "lat": 10.32,
     "lng": 76.96
   },
@@ -179,6 +185,7 @@ export const tnDestinations: TNDestination[] = [
       "Tribal Village Tour 🏕️"
     ],
     "nearestStation": "Ambur",
+    "hasRailAccess": false,
     "lat": 12.5,
     "lng": 78.57
   },
@@ -202,6 +209,7 @@ export const tnDestinations: TNDestination[] = [
       "Snake Farm (ECR) 🐍"
     ],
     "nearestStation": "Chengalpattu",
+    "hasRailAccess": false,
     "lat": 12.62,
     "lng": 80.19
   },
@@ -226,6 +234,7 @@ export const tnDestinations: TNDestination[] = [
       "Dr. APJ Abdul Kalam Memorial 🌟"
     ],
     "nearestStation": "Rameswaram",
+    "hasRailAccess": true,
     "lat": 9.29,
     "lng": 79.31
   },
@@ -250,6 +259,7 @@ export const tnDestinations: TNDestination[] = [
       "National Maritime Museum ⚓"
     ],
     "nearestStation": "Kanyakumari",
+    "hasRailAccess": true,
     "lat": 8.08,
     "lng": 77.55
   },
@@ -274,6 +284,7 @@ export const tnDestinations: TNDestination[] = [
       "Scuba Diving (Temple Adventures) 🤿"
     ],
     "nearestStation": "Puducherry",
+    "hasRailAccess": true,
     "lat": 11.93,
     "lng": 79.83
   },
@@ -296,6 +307,7 @@ export const tnDestinations: TNDestination[] = [
       "Sand Dunes 🏜️"
     ],
     "nearestStation": "Rameswaram",
+    "hasRailAccess": false,
     "lat": 9.15,
     "lng": 79.42
   },
@@ -320,6 +332,7 @@ export const tnDestinations: TNDestination[] = [
       "Thirupparankundram Cave Temple 🛕"
     ],
     "nearestStation": "Madurai Junction",
+    "hasRailAccess": true,
     "lat": 9.92,
     "lng": 78.12
   },
@@ -343,6 +356,7 @@ export const tnDestinations: TNDestination[] = [
       "Poompuhar Boat Ride 🚣"
     ],
     "nearestStation": "Thanjavur Junction",
+    "hasRailAccess": true,
     "lat": 10.79,
     "lng": 79.14
   },
@@ -365,6 +379,7 @@ export const tnDestinations: TNDestination[] = [
       "Ulagalandha Perumal Temple 🛕"
     ],
     "nearestStation": "Chengalpattu",
+    "hasRailAccess": true,
     "lat": 12.84,
     "lng": 79.7
   },
@@ -385,6 +400,7 @@ export const tnDestinations: TNDestination[] = [
       "Sethupathy Museum 🏛️"
     ],
     "nearestStation": "Chidambaram",
+    "hasRailAccess": true,
     "lat": 11.4,
     "lng": 79.69
   },
@@ -408,6 +424,7 @@ export const tnDestinations: TNDestination[] = [
       "Swamimalai Murugan Temple 🛕"
     ],
     "nearestStation": "Kumbakonam",
+    "hasRailAccess": true,
     "lat": 10.96,
     "lng": 79.39
   },
@@ -429,6 +446,7 @@ export const tnDestinations: TNDestination[] = [
       "Chatram Bus Stand area 🏙️"
     ],
     "nearestStation": "Tiruchchirappalli Junction",
+    "hasRailAccess": true,
     "lat": 10.79,
     "lng": 78.7
   },
@@ -450,6 +468,7 @@ export const tnDestinations: TNDestination[] = [
       "Yelagiri Hills (40km) 🌿"
     ],
     "nearestStation": "Katpadi Junction",
+    "hasRailAccess": true,
     "lat": 12.92,
     "lng": 79.13
   },
@@ -468,6 +487,7 @@ export const tnDestinations: TNDestination[] = [
     "Cuddalore Harbour"
   ],
   "nearestStation": "Thirupathiripuliyur",
+    "hasRailAccess": true,
   "lat": 11.7447,
   "lng": 79.7680
 },
@@ -488,6 +508,7 @@ export const tnDestinations: TNDestination[] = [
     "Sikkal Singaravelar Temple"
   ],
   "nearestStation": "Nagapattinam Junction",
+    "hasRailAccess": true,
   "lat": 10.7672,
   "lng": 79.8449
 },
@@ -510,6 +531,7 @@ export const tnDestinations: TNDestination[] = [
       "Giri Valam (Hill Circumambulation) 🚶"
     ],
     "nearestStation": "Tiruvannamalai",
+    "hasRailAccess": true,
     "lat": 12.23,
     "lng": 79.07
   },
@@ -533,6 +555,7 @@ export const tnDestinations: TNDestination[] = [
       "Himavad Gopalaswamy Temple 🛕"
     ],
     "nearestStation": "Mettupalayam",
+    "hasRailAccess": false,
     "lat": 11.59,
     "lng": 76.55
   },
@@ -555,6 +578,7 @@ export const tnDestinations: TNDestination[] = [
       "Grass Hills 🏔️"
     ],
     "nearestStation": "Pollachi",
+    "hasRailAccess": false,
     "lat": 10.45,
     "lng": 76.81
   },
@@ -575,6 +599,7 @@ export const tnDestinations: TNDestination[] = [
       "Kayaking (Seasonal) 🛶"
     ],
     "nearestStation": "Chidambaram",
+    "hasRailAccess": false,
     "lat": 11.43,
     "lng": 79.78
   },
@@ -597,6 +622,7 @@ export const tnDestinations: TNDestination[] = [
       "Salem Town Area 🏙️"
     ],
     "nearestStation": "Salem Junction",
+    "hasRailAccess": true,
     "lat": 11.66,
     "lng": 78.15
   },
@@ -620,6 +646,7 @@ export const tnDestinations: TNDestination[] = [
       "Ambasamudram (nearby) 🏘️"
     ],
     "nearestStation": "Tirunelveli Junction",
+    "hasRailAccess": true,
     "lat": 8.71,
     "lng": 77.76
   },
@@ -644,6 +671,7 @@ export const tnDestinations: TNDestination[] = [
       "Mahabalipuram (55km) 🏛️"
     ],
     "nearestStation": "Chennai Central / Egmore",
+    "hasRailAccess": true,
     "lat": 13.08,
     "lng": 80.27
   },
@@ -668,6 +696,7 @@ export const tnDestinations: TNDestination[] = [
       "Siruvani Waterfalls 💦"
     ],
     "nearestStation": "Coimbatore Junction",
+    "hasRailAccess": true,
     "lat": 11.02,
     "lng": 76.96
   },
@@ -690,6 +719,7 @@ export const tnDestinations: TNDestination[] = [
       "Ingur Dam 💧"
     ],
     "nearestStation": "Erode Junction",
+    "hasRailAccess": true,
     "lat": 11.34,
     "lng": 77.72
   },
@@ -711,6 +741,7 @@ export const tnDestinations: TNDestination[] = [
       "Sivaraj Memorial 🏛️"
     ],
     "nearestStation": "Tiruppur",
+    "hasRailAccess": true,
     "lat": 11.11,
     "lng": 77.34
   },
@@ -733,6 +764,7 @@ export const tnDestinations: TNDestination[] = [
       "Salt Flats 🧂"
     ],
     "nearestStation": "Tuticorin",
+    "hasRailAccess": true,
     "lat": 8.8073,
     "lng": 78.1503
   },
@@ -754,6 +786,7 @@ export const tnDestinations: TNDestination[] = [
       "Vedasandur 🌿"
     ],
     "nearestStation": "Dindigul Junction",
+    "hasRailAccess": true,
     "lat": 10.36,
     "lng": 77.97
   },
@@ -776,6 +809,7 @@ export const tnDestinations: TNDestination[] = [
       "Sea Bathing (Beach) 🏖️"
     ],
     "nearestStation": "Nagapattinam",
+    "hasRailAccess": false,
     "lat": 10.68,
     "lng": 79.85
   },
@@ -797,6 +831,7 @@ export const tnDestinations: TNDestination[] = [
       "Ziegenbalg Memorial 📖"
     ],
     "nearestStation": "Nagapattinam",
+    "hasRailAccess": false,
     "lat": 11.03,
     "lng": 79.85
   },
@@ -816,6 +851,7 @@ export const tnDestinations: TNDestination[] = [
     "Nagore Dargah nearby"
   ],
   "nearestStation": "Thirunallar or Karaikal",
+    "hasRailAccess": false,
   "lat": 10.92,
   "lng": 79.78
 },
@@ -835,6 +871,7 @@ export const tnDestinations: TNDestination[] = [
     "Kundrakudi Murugan Temple"
   ],
   "nearestStation": "Karaikudi Junction",
+    "hasRailAccess": false,
   "lat": 9.84,
   "lng": 78.48
 },
@@ -855,6 +892,7 @@ export const tnDestinations: TNDestination[] = [
     "Chidambaram day trip"
   ],
   "nearestStation": "Mayiladuthurai Junction",
+    "hasRailAccess": true,
   "lat": 11.1,
   "lng": 79.65
 },
@@ -875,6 +913,7 @@ export const tnDestinations: TNDestination[] = [
     "Manapad beach nearby"
   ],
   "nearestStation": "Tiruchendur",
+    "hasRailAccess": true,
   "lat": 8.49,
   "lng": 78.12
 },
@@ -894,6 +933,7 @@ export const tnDestinations: TNDestination[] = [
     "Chennai day trip"
   ],
   "nearestStation": "Tiruttani",
+    "hasRailAccess": true,
   "lat": 13.18,
   "lng": 79.61
 },
@@ -913,6 +953,7 @@ export const tnDestinations: TNDestination[] = [
     "Kodaikanal side trip"
   ],
   "nearestStation": "Palani",
+    "hasRailAccess": true,
   "lat": 10.45,
   "lng": 77.52
 },
@@ -932,6 +973,7 @@ export const tnDestinations: TNDestination[] = [
     "Bronze Idol Workshops"
   ],
   "nearestStation": "Kumbakonam Railway Station",
+    "hasRailAccess": false,
   "lat": 10.9577,
   "lng": 79.3292
 },
@@ -952,6 +994,7 @@ export const tnDestinations: TNDestination[] = [
     "Papanasam side trip"
   ],
   "nearestStation": "Tenkasi Junction",
+    "hasRailAccess": true,
   "lat": 8.96,
   "lng": 77.31
 },
@@ -971,6 +1014,7 @@ export const tnDestinations: TNDestination[] = [
     "Local Markets"
   ],
   "nearestStation": "Madurai Junction",
+    "hasRailAccess": false,
   "lat": 9.8818,
   "lng": 78.0717
 },
@@ -990,6 +1034,7 @@ export const tnDestinations: TNDestination[] = [
     "Nature Trails"
   ],
   "nearestStation": "Madurai Junction",
+    "hasRailAccess": false,
   "lat": 10.0246,
   "lng": 78.2138
 },
@@ -1008,6 +1053,7 @@ export const tnDestinations: TNDestination[] = [
     "Santhome Basilica",
   ],
   "nearestStation": "Mylapore MRTS Station",
+    "hasRailAccess": false,
   "lat": 13.0339,
   "lng": 80.2697
 },
@@ -1027,6 +1073,7 @@ export const tnDestinations: TNDestination[] = [
     "Ancient Architecture"
   ],
   "nearestStation": "Arakkonam Junction",
+    "hasRailAccess": false,
   "lat": 12.8476,
   "lng": 79.6994
 },
@@ -1046,6 +1093,7 @@ export const tnDestinations: TNDestination[] = [
     "Historic Monuments"
   ],
   "nearestStation": "Arakkonam Junction",
+    "hasRailAccess": false,
   "lat": 12.8476,
   "lng": 79.6994
 },
@@ -1065,6 +1113,7 @@ export const tnDestinations: TNDestination[] = [
     "Nearby Kanyakumari"
   ],
   "nearestStation": "Nagercoil Junction",
+    "hasRailAccess": false,
   "lat": 8.1549,
   "lng": 77.4670
 },
@@ -1084,6 +1133,7 @@ export const tnDestinations: TNDestination[] = [
     "Kanyakumari Beach"
   ],
   "nearestStation": "Kanyakumari Railway Station",
+    "hasRailAccess": false,
   "lat": 8.0780,
   "lng": 77.5550
 },
@@ -1102,6 +1152,7 @@ export const tnDestinations: TNDestination[] = [
     "Historic Architecture"
   ],
   "nearestStation": "Chepauk MRTS Station",
+    "hasRailAccess": false,
   "lat": 13.0530,
   "lng": 80.2756
 },
@@ -1121,6 +1172,7 @@ export const tnDestinations: TNDestination[] = [
     "Rajapalayam belt"
   ],
   "nearestStation": "Sankarankovil",
+    "hasRailAccess": false,
   "lat": 9.17,
   "lng": 77.55
 },
@@ -1140,6 +1192,7 @@ export const tnDestinations: TNDestination[] = [
       "Nilgiri Mountain Railway"
     ],
     "nearestStation": "Coonoor",
+    "hasRailAccess": true,
     "lat": 11.35,
     "lng": 76.79
   },
@@ -1159,6 +1212,7 @@ export const tnDestinations: TNDestination[] = [
       "Kotagiri walks"
     ],
     "nearestStation": "Coonoor",
+    "hasRailAccess": false,
     "lat": 11.42,
     "lng": 76.86
   },
@@ -1178,6 +1232,7 @@ export const tnDestinations: TNDestination[] = [
       "Forest drives"
     ],
     "nearestStation": "Theni",
+    "hasRailAccess": false,
     "lat": 9.74,
     "lng": 77.41
   },
@@ -1197,6 +1252,7 @@ export const tnDestinations: TNDestination[] = [
     "Elephant camp"
   ],
   "nearestStation": "Kottayam",
+    "hasRailAccess": false,
   "lat": 9.5949,
   "lng": 77.1741
 },
@@ -1215,6 +1271,7 @@ export const tnDestinations: TNDestination[] = [
       "Dindigul food trail"
     ],
     "nearestStation": "Dindigul Junction",
+    "hasRailAccess": false,
     "lat": 10.27,
     "lng": 77.96
   },
@@ -1233,6 +1290,7 @@ export const tnDestinations: TNDestination[] = [
       "Nature drives"
     ],
     "nearestStation": "Trichy Junction",
+    "hasRailAccess": false,
     "lat": 11.32,
     "lng": 78.5
   },
@@ -1251,6 +1309,7 @@ export const tnDestinations: TNDestination[] = [
       "Oil massage area"
     ],
     "nearestStation": "Dharmapuri",
+    "hasRailAccess": false,
     "lat": 12.11,
     "lng": 77.77
   },
@@ -1270,6 +1329,7 @@ export const tnDestinations: TNDestination[] = [
       "Tenkasi temple"
     ],
     "nearestStation": "Tenkasi Junction",
+    "hasRailAccess": false,
     "lat": 8.93,
     "lng": 77.27
   },
@@ -1288,6 +1348,7 @@ export const tnDestinations: TNDestination[] = [
       "Manimuthar side trip"
     ],
     "nearestStation": "Ambasamudram",
+    "hasRailAccess": false,
     "lat": 8.71,
     "lng": 77.36
   },
@@ -1306,6 +1367,7 @@ export const tnDestinations: TNDestination[] = [
       "Papanasam circuit"
     ],
     "nearestStation": "Ambasamudram",
+    "hasRailAccess": false,
     "lat": 8.66,
     "lng": 77.39
   },
@@ -1324,6 +1386,7 @@ export const tnDestinations: TNDestination[] = [
       "Kanyakumari side trip"
     ],
     "nearestStation": "Nagercoil Junction",
+    "hasRailAccess": false,
     "lat": 8.32,
     "lng": 77.32
   },
@@ -1342,6 +1405,7 @@ export const tnDestinations: TNDestination[] = [
       "Kallanai side trip"
     ],
     "nearestStation": "Srirangam",
+    "hasRailAccess": true,
     "lat": 10.86,
     "lng": 78.69
   },
@@ -1359,6 +1423,7 @@ export const tnDestinations: TNDestination[] = [
       "Jayankondam belt"
     ],
     "nearestStation": "Ariyalur",
+    "hasRailAccess": false,
     "lat": 11.2,
     "lng": 79.44
   },
@@ -1377,6 +1442,7 @@ export const tnDestinations: TNDestination[] = [
       "Mahamaham tank"
     ],
     "nearestStation": "Kumbakonam",
+    "hasRailAccess": false,
     "lat": 10.95,
     "lng": 79.36
   },
@@ -1395,6 +1461,7 @@ export const tnDestinations: TNDestination[] = [
       "Karaikal side trip"
     ],
     "nearestStation": "Nagore",
+    "hasRailAccess": true,
     "lat": 10.81,
     "lng": 79.84
   },
@@ -1413,6 +1480,7 @@ export const tnDestinations: TNDestination[] = [
       "French heritage streets"
     ],
     "nearestStation": "Karaikal",
+    "hasRailAccess": true,
     "lat": 10.92,
     "lng": 79.83
   },
@@ -1431,6 +1499,7 @@ export const tnDestinations: TNDestination[] = [
       "Pillayarpatti side trip"
     ],
     "nearestStation": "Karaikudi Junction",
+    "hasRailAccess": true,
     "lat": 10.07,
     "lng": 78.78
   },
@@ -1449,6 +1518,7 @@ export const tnDestinations: TNDestination[] = [
       "Chettinad cuisine"
     ],
     "nearestStation": "Karaikudi Junction",
+    "hasRailAccess": false,
     "lat": 10.16,
     "lng": 78.78
   },
@@ -1467,6 +1537,7 @@ export const tnDestinations: TNDestination[] = [
       "Chettinad belt"
     ],
     "nearestStation": "Sivaganga",
+    "hasRailAccess": true,
     "lat": 9.84,
     "lng": 78.48
   },
@@ -1485,6 +1556,7 @@ export const tnDestinations: TNDestination[] = [
       "Tiruchengode side trip"
     ],
     "nearestStation": "Salem Junction",
+    "hasRailAccess": false,
     "lat": 11.22,
     "lng": 78.17
   },
@@ -1503,6 +1575,7 @@ export const tnDestinations: TNDestination[] = [
       "Hill viewpoints"
     ],
     "nearestStation": "Katpadi Junction",
+    "hasRailAccess": false,
     "lat": 12.52,
     "lng": 78.21
   },
@@ -1521,6 +1594,7 @@ export const tnDestinations: TNDestination[] = [
       "Cauvery belt"
     ],
     "nearestStation": "Dharmapuri",
+    "hasRailAccess": true,
     "lat": 12.13,
     "lng": 78.16
   },
@@ -1539,6 +1613,7 @@ export const tnDestinations: TNDestination[] = [
       "Western Ghats edge"
     ],
     "nearestStation": "Tirunelveli Junction",
+    "hasRailAccess": false,
     "lat": 8.55,
     "lng": 77.55
   },
@@ -1557,6 +1632,7 @@ export const tnDestinations: TNDestination[] = [
       "Nanguneri side trip"
     ],
     "nearestStation": "Tirunelveli Junction",
+    "hasRailAccess": false,
     "lat": 8.45,
     "lng": 77.75
   },
@@ -1575,6 +1651,7 @@ export const tnDestinations: TNDestination[] = [
       "Day trip from Chennai"
     ],
     "nearestStation": "Chengalpattu Junction",
+    "hasRailAccess": false,
     "lat": 12.55,
     "lng": 79.85
   },
@@ -1593,6 +1670,7 @@ export const tnDestinations: TNDestination[] = [
       "Pondicherry side trip"
     ],
     "nearestStation": "Tindivanam",
+    "hasRailAccess": false,
     "lat": 12.2,
     "lng": 79.95
   },
@@ -1611,6 +1689,7 @@ export const tnDestinations: TNDestination[] = [
       "Mayiladuthurai temples"
     ],
     "nearestStation": "Mayiladuthurai Junction",
+    "hasRailAccess": false,
     "lat": 11.14,
     "lng": 79.85
   },
@@ -1629,6 +1708,7 @@ export const tnDestinations: TNDestination[] = [
       "Birding season"
     ],
     "nearestStation": "Thiruvarur Junction / Nagapattinam Junction",
+    "hasRailAccess": false,
     "lat": 10.3,
     "lng": 79.85
   },
@@ -1647,6 +1727,7 @@ export const tnDestinations: TNDestination[] = [
       "Kodikkarai coast"
     ],
     "nearestStation": "Thiruvarur Junction / Nagapattinam Junction",
+    "hasRailAccess": false,
     "lat": 10.3,
     "lng": 79.85
   },
@@ -1665,6 +1746,7 @@ export const tnDestinations: TNDestination[] = [
       "Sriharikota viewpoint"
     ],
     "nearestStation": "Ponneri",
+    "hasRailAccess": false,
     "lat": 13.42,
     "lng": 80.32
   },
@@ -1683,6 +1765,7 @@ export const tnDestinations: TNDestination[] = [
       "Valparai route"
     ],
     "nearestStation": "Pollachi Junction",
+    "hasRailAccess": true,
     "lat": 10.66,
     "lng": 77.01
   },
@@ -1700,6 +1783,7 @@ export const tnDestinations: TNDestination[] = [
       "Coimbatore side trip"
     ],
     "nearestStation": "Tiruppur",
+    "hasRailAccess": false,
     "lat": 11.19,
     "lng": 77.27
   },
@@ -1718,6 +1802,7 @@ export const tnDestinations: TNDestination[] = [
       "Coimbatore food"
     ],
     "nearestStation": "Coimbatore Junction",
+    "hasRailAccess": false,
     "lat": 10.99,
     "lng": 76.91
   },
@@ -1736,6 +1821,7 @@ export const tnDestinations: TNDestination[] = [
       "Mayiladuthurai temples"
     ],
     "nearestStation": "Mayiladuthurai Junction",
+    "hasRailAccess": false,
     "lat": 11.12,
     "lng": 79.83
   }
