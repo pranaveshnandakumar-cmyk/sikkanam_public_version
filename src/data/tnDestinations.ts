@@ -3,9 +3,23 @@ export type DestinationCategory = 'hill' | 'beach' | 'temple' | 'city' | 'herita
 
 export interface TNDestination {
   id: string; name: string; fullName: string; category: DestinationCategory;
-  emoji: string; district: string; description: string; attractions: string[];
+  emoji: string; district: string; districtDesc?: string; description: string; attractions: string[];
   nearestStation: string; hasRailAccess: boolean; lat: number; lng: number;
   hotels?: Hotel[]; // Optional hotels field for trip planning
+  whyVisit?: string;
+  recommendedDays?: number;
+  bestMonths?: string[];
+  travelStyles?: string[];
+  difficulty?: 'easy' | 'moderate' | 'challenging';
+  seasonalTags?: string[];
+  costIndex?: number;
+  mobilityProfile?: 'low' | 'medium' | 'high';
+  activityProfile?: {
+    freeAttractions: number;
+    paidAttractions: number;
+    averageEntryFee: number;
+  };
+  budgetReliability?: number;
 }
 export interface Hotel {
   name: string;
@@ -22,7 +36,7 @@ export interface Hotel {
 }
 
 export type Destination = TNDestination;
-export const tnDestinations: TNDestination[] = [
+const rawDestinations: TNDestination[] = [
   {
     "id": "ooty",
     "name": "Ooty",
@@ -1827,6 +1841,222 @@ export const tnDestinations: TNDestination[] = [
   }
   
 ];
+
+const SPECIFIC_METADATA: Record<string, Partial<TNDestination>> = {
+  ooty: {
+    whyVisit: "UNESCO Nilgiri Mountain Railway, rolling tea hills, and botanical wonderlands.",
+    recommendedDays: 3,
+    bestMonths: ["October", "November", "December", "January", "February", "March", "April", "May"],
+    travelStyles: ["nature", "scenic", "roadtrip"],
+    difficulty: "moderate",
+    seasonalTags: ["peak_crowds", "winter_chill"],
+    costIndex: 4,
+    mobilityProfile: "high",
+    activityProfile: { freeAttractions: 8, paidAttractions: 3, averageEntryFee: 40 },
+    budgetReliability: 82
+  },
+  kodaikanal: {
+    whyVisit: "Scenic pine forests, misty lake views, and cool mountain weather.",
+    recommendedDays: 3,
+    bestMonths: ["October", "November", "December", "January", "February", "March", "April", "May"],
+    travelStyles: ["nature", "scenic", "relaxation"],
+    difficulty: "moderate",
+    seasonalTags: ["hill_station", "misty"],
+    costIndex: 5,
+    mobilityProfile: "high",
+    activityProfile: { freeAttractions: 6, paidAttractions: 4, averageEntryFee: 50 },
+    budgetReliability: 80
+  },
+  yercaud: {
+    whyVisit: "Quiet coffee estates, peaceful lake boating, and panoramic valley viewpoints.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["nature", "pocket_friendly", "relaxation"],
+    difficulty: "easy",
+    seasonalTags: ["scenic", "budget_friendly"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 8, paidAttractions: 2, averageEntryFee: 30 },
+    budgetReliability: 88
+  },
+  valparai: {
+    whyVisit: "Untouched tea estates, wild animal crossings, and scenic hair-pin drives.",
+    recommendedDays: 3,
+    bestMonths: ["September", "October", "November", "December", "January", "February"],
+    travelStyles: ["nature", "wildlife", "roadtrip"],
+    difficulty: "moderate",
+    seasonalTags: ["wildlife", "roadtrip"],
+    costIndex: 4,
+    mobilityProfile: "high",
+    activityProfile: { freeAttractions: 6, paidAttractions: 2, averageEntryFee: 40 },
+    budgetReliability: 85
+  },
+  chidambaram: {
+    whyVisit: "Nataraja Cosmic Dance temple and ancient mangrove boating trails.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["heritage", "spiritual", "nature"],
+    difficulty: "easy",
+    seasonalTags: ["temple_town", "mangroves"],
+    costIndex: 2,
+    mobilityProfile: "low",
+    activityProfile: { freeAttractions: 4, paidAttractions: 1, averageEntryFee: 25 },
+    budgetReliability: 95
+  },
+  thanjavur: {
+    whyVisit: "The iconic 1000-year-old Brihadisvara Temple and rich Chola art legacy.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["heritage", "architecture", "history"],
+    difficulty: "easy",
+    seasonalTags: ["heritage_site", "unesco"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 6, paidAttractions: 3, averageEntryFee: 40 },
+    budgetReliability: 92
+  },
+  rameswaram: {
+    whyVisit: "Pamban bridge crossings, holy sea baths, and Dhanushkodi ghost town ruins.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February", "March"],
+    travelStyles: ["spiritual", "coastal", "history"],
+    difficulty: "easy",
+    seasonalTags: ["spiritual", "coastal"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 7, paidAttractions: 3, averageEntryFee: 30 },
+    budgetReliability: 90
+  },
+  courtallam: {
+    whyVisit: "Medicinal mountain waterfalls, local food, and refreshing monsoon mist.",
+    recommendedDays: 2,
+    bestMonths: ["June", "July", "August", "September"],
+    travelStyles: ["nature", "waterfalls", "relaxation"],
+    difficulty: "easy",
+    seasonalTags: ["waterfalls_active", "monsoon_special"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 5, paidAttractions: 1, averageEntryFee: 20 },
+    budgetReliability: 85
+  },
+  madurai: {
+    whyVisit: "Meenakshi Amman Temple, historical streets, and legendary street food culture.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["heritage", "spiritual", "foodie"],
+    difficulty: "easy",
+    seasonalTags: ["temple_town", "street_food"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 8, paidAttractions: 2, averageEntryFee: 30 },
+    budgetReliability: 90
+  },
+  pondicherry: {
+    whyVisit: "French colonial quarters, rocky beaches, chic cafes, and Auroville.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February", "March"],
+    travelStyles: ["coastal", "relaxation", "french_culture"],
+    difficulty: "easy",
+    seasonalTags: ["beach_vibes", "cafes"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 7, paidAttractions: 3, averageEntryFee: 40 },
+    budgetReliability: 88
+  }
+};
+
+const CATEGORY_DEFAULTS: Record<string, Partial<TNDestination>> = {
+  hill: {
+    whyVisit: "Lush green tea gardens, mist-clad peaks, and refreshing weather.",
+    recommendedDays: 3,
+    bestMonths: ["October", "November", "December", "January", "February", "March", "April", "May"],
+    travelStyles: ["nature", "scenic", "roadtrip"],
+    difficulty: "moderate",
+    seasonalTags: ["hill_station", "misty"],
+    costIndex: 4,
+    mobilityProfile: "high",
+    activityProfile: { freeAttractions: 5, paidAttractions: 3, averageEntryFee: 50 },
+    budgetReliability: 82
+  },
+  beach: {
+    whyVisit: "Golden sands, coastal breeze, and serene ocean views.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February", "March"],
+    travelStyles: ["coastal", "relaxation", "seafood"],
+    difficulty: "easy",
+    seasonalTags: ["coastal", "beach_vibes"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 4, paidAttractions: 2, averageEntryFee: 30 },
+    budgetReliability: 88
+  },
+  temple: {
+    whyVisit: "Stunning Dravidian architecture, historic stone carvings, and spiritual energy.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["heritage", "spiritual", "architecture"],
+    difficulty: "easy",
+    seasonalTags: ["temple_town", "cultural"],
+    costIndex: 2,
+    mobilityProfile: "low",
+    activityProfile: { freeAttractions: 6, paidAttractions: 1, averageEntryFee: 20 },
+    budgetReliability: 95
+  },
+  city: {
+    whyVisit: "Vibrant local markets, iconic landmarks, and legendary culinary experiences.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February", "March"],
+    travelStyles: ["citylife", "foodie", "shopping"],
+    difficulty: "easy",
+    seasonalTags: ["urban", "shopping"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 4, paidAttractions: 2, averageEntryFee: 40 },
+    budgetReliability: 90
+  },
+  heritage: {
+    whyVisit: "Historic monuments, ancient forts, and rich cultural legacy.",
+    recommendedDays: 2,
+    bestMonths: ["October", "November", "December", "January", "February"],
+    travelStyles: ["heritage", "history", "photography"],
+    difficulty: "easy",
+    seasonalTags: ["monument", "historic"],
+    costIndex: 3,
+    mobilityProfile: "medium",
+    activityProfile: { freeAttractions: 4, paidAttractions: 3, averageEntryFee: 40 },
+    budgetReliability: 92
+  },
+  wildlife: {
+    whyVisit: "Exotic flora and fauna, forest safaris, and nature trails.",
+    recommendedDays: 2,
+    bestMonths: ["September", "October", "November", "December", "January", "February"],
+    travelStyles: ["wildlife", "nature", "adventure"],
+    difficulty: "moderate",
+    seasonalTags: ["forest", "wildlife"],
+    costIndex: 4,
+    mobilityProfile: "high",
+    activityProfile: { freeAttractions: 3, paidAttractions: 3, averageEntryFee: 100 },
+    budgetReliability: 85
+  }
+};
+
+export const tnDestinations: TNDestination[] = rawDestinations.map(dest => {
+  const specific = SPECIFIC_METADATA[dest.id] || {};
+  const defaults = CATEGORY_DEFAULTS[dest.category] || {};
+  return {
+    ...dest,
+    whyVisit: specific.whyVisit || defaults.whyVisit || dest.description,
+    recommendedDays: specific.recommendedDays || defaults.recommendedDays || 2,
+    bestMonths: specific.bestMonths || defaults.bestMonths || ["October", "November", "December", "January"],
+    travelStyles: specific.travelStyles || defaults.travelStyles || ["nature"],
+    difficulty: specific.difficulty || defaults.difficulty || "easy",
+    seasonalTags: specific.seasonalTags || defaults.seasonalTags || [],
+    costIndex: specific.costIndex || defaults.costIndex || 3,
+    mobilityProfile: specific.mobilityProfile || defaults.mobilityProfile || "medium",
+    activityProfile: specific.activityProfile || defaults.activityProfile || { freeAttractions: 4, paidAttractions: 2, averageEntryFee: 30 },
+    budgetReliability: specific.budgetReliability || defaults.budgetReliability || 90
+  };
+});
 
 export const categoryLabels: Record<DestinationCategory, string> = {
   hill: '🏔️ Hill Station', beach: '🏖️ Beach', temple: '🛕 Temple',

@@ -10,12 +10,12 @@ import {
 
 const TripPlanner = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
-
-  const [tripPlan, setTripPlan] =
-    useState<TripPlan | null>(null);
+  const [tripInput, setTripInput] = useState<TripInput | null>(null);
+  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
 
   const handleGenerate = useCallback(
     async (input: TripInput) => {
+      setTripInput(input);
       const plan = await generateTripPlan(input);
 
       setTripPlan(plan);
@@ -29,6 +29,17 @@ const TripPlanner = () => {
     []
   );
 
+  const handleSelectDestination = useCallback(
+    async (destId: string) => {
+      if (!tripInput) return;
+      const nextInput = { ...tripInput, destination: destId };
+      setTripInput(nextInput);
+      const plan = await generateTripPlan(nextInput);
+      setTripPlan(plan);
+    },
+    [tripInput]
+  );
+
   return (
     <div className="max-w-md md:max-w-4xl mx-auto md:px-6 md:pt-6">
       <TripPlannerForm
@@ -39,6 +50,7 @@ const TripPlanner = () => {
         <TripResults
           ref={resultsRef}
           plan={tripPlan}
+          onSelectDestination={handleSelectDestination}
         />
       )}
     </div>

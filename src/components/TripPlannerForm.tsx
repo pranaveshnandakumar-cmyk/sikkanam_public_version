@@ -1,6 +1,6 @@
 import { useState, forwardRef } from "react";
 import { tnDestinations } from "@/data/tnDestinations";
-import { type TripInput, type TravelStyle } from "@/lib/tripPlanner";
+import { type TripInput, type TravelStyle, type TravellerType } from "@/lib/tripPlanner";
 import { MapPin, Users, Calendar, Wallet, Compass } from "lucide-react";
 
 interface TripPlannerFormProps {
@@ -14,22 +14,23 @@ const TripPlannerForm = forwardRef<HTMLDivElement, TripPlannerFormProps>(({ onGe
   const [travellers, setTravellers] = useState(2);
   const [style, setStyle] = useState<TravelStyle>("standard");
   const [budget, setBudget] = useState(5000);
+  const [travellerType, setTravellerType] = useState<TravellerType>("family");
   const [error, setError] = useState("");
 
   const sortedDestinations = [...tnDestinations].sort((a, b) => a.name.localeCompare(b.name));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!source || !destination) {
-      setError("Please select both source and destination");
+    if (!source) {
+      setError("Please select a source");
       return;
     }
-    if (source === destination) {
+    if (destination !== "" && source === destination) {
       setError("Source and destination cannot be the same");
       return;
     }
     setError("");
-    onGenerate({ source, destination, days, travellers, style, budget });
+    onGenerate({ source, destination, days, travellers, style, budget, travellerType });
   };
 
   const styleOptions: { value: TravelStyle; label: string; emoji: string }[] = [
@@ -77,7 +78,7 @@ const TripPlannerForm = forwardRef<HTMLDivElement, TripPlannerFormProps>(({ onGe
                 onChange={(e) => setDestination(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
               >
-                <option value="">Select destination</option>
+                <option value="">🔮 Help Me Choose! (Recommend Destinations)</option>
                 {sortedDestinations
   .filter((d) => d.id !== source)
   .map((d) => (
@@ -89,8 +90,8 @@ const TripPlannerForm = forwardRef<HTMLDivElement, TripPlannerFormProps>(({ onGe
             </div>
           </div>
 
-          {/* Days & Travellers */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Days & Travellers & Traveller Profile */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
                 <Calendar className="w-4 h-4 text-primary" /> Days
@@ -117,6 +118,22 @@ const TripPlannerForm = forwardRef<HTMLDivElement, TripPlannerFormProps>(({ onGe
                 {Array.from({ length: 10 }, (_, i) => i + 1).map(t => (
                   <option key={t} value={t}>{t} {t === 1 ? "Person" : "People"}</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                <Users className="w-4 h-4 text-primary" /> Traveller Profile
+              </label>
+              <select
+                value={travellerType}
+                onChange={(e) => setTravellerType(e.target.value as TravellerType)}
+                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+              >
+                <option value="solo">🎒 Solo Traveller</option>
+                <option value="couple">💑 Couple</option>
+                <option value="family">👨‍👩‍👧‍👦 Family</option>
+                <option value="friends">👥 Friends Group</option>
+                <option value="seniors">👵 Senior Citizens</option>
               </select>
             </div>
           </div>
