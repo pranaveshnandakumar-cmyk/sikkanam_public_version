@@ -56,10 +56,20 @@ function extractParameters(query, destinations) {
     params.days = parseInt(dayMatch[1], 10);
   }
   
-  // 2. Extract budget (e.g., "under 5000", "budget 8000", "cost around 10000", "₹12000")
-  const budgetMatch = query.match(/(?:under|below|around|approx|budget|rs|₹|inr|cost|spend)?\s*(\d{4,6})/i);
-  if (budgetMatch) {
-    params.budget = parseInt(budgetMatch[1], 10);
+  // 2. Extract budget (e.g., "under 5000", "budget 8000", "cost around 10000", "₹12000", "4k")
+  const kMatch = query.match(/(?:under|below|around|approx|budget|rs|₹|inr|cost|spend)?\s*(\d+)\s*k\b/i);
+  if (kMatch) {
+    params.budget = parseInt(kMatch[1], 10) * 1000;
+  } else {
+    const budgetMatch = query.match(/(?:under|below|around|approx|budget|rs|₹|inr|cost|spend)?\s*(\d{4,6})/i);
+    if (budgetMatch) {
+      params.budget = parseInt(budgetMatch[1], 10);
+    }
+  }
+
+  // 2.5 Extract audience preference (e.g., youngsters, friends, adventure)
+  if (query.includes("youngster") || query.includes("youth") || query.includes("friend") || query.includes("colleague") || query.includes("trek") || query.includes("adventure") || query.includes("fun")) {
+    params.audience = "youngsters";
   }
   
   // 3. Extract destination
@@ -237,6 +247,31 @@ function generateLocalFallbackResponse(intent, params, destinations, tourismAsse
             }
           }
         }
+        return reply;
+      }
+    }
+
+    if (params.budget) {
+      let filtered = destinations;
+      if (params.audience === "youngsters") {
+        filtered = destinations.filter(d => d.category === "hill" || d.category === "beach");
+      }
+      
+      const affordable = filtered.filter(d => {
+        const cost = (d.recommendedDays || 2) * 1600;
+        return cost <= params.budget;
+      }).slice(0, 3);
+      
+      if (affordable.length > 0) {
+        reply += `Here are budget-friendly recommendations fitting your **₹${params.budget}** budget ${params.audience === "youngsters" ? "for youngsters (beaches & hill stations)" : ""}:\n\n`;
+        affordable.forEach(d => {
+          const cost = (d.recommendedDays || 2) * 1600;
+          reply += `#### 📍 ${d.name} (${d.category === "hill" ? "Hill Station" : "Beach"})\n`;
+          reply += `* **Highlight**: ${d.whyVisit || d.description}\n`;
+          reply += `* **Estimated Cost**: ~₹${cost} for ${d.recommendedDays || 2} days\n`;
+          reply += `* **Must-See**: ${d.attractions?.slice(0, 3).join(", ") || ""}\n\n`;
+        });
+        reply += `*Tip: Ask me to plan a trip to a specific place (e.g., "Plan a trip to ${affordable[0].name}") for a day-wise plan.*`;
         return reply;
       }
     }
