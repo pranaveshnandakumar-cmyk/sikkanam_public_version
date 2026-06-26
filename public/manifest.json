@@ -2,13 +2,62 @@
   "name": "Sikkanam — Tamil Nadu Travel Planner",
   "short_name": "Sikkanam",
   "description": "Plan affordable trips across Tamil Nadu with AI",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#ea580c",
   "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "travel",
+    "utilities"
+  ],
   "icons": [
-    { "src": "/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1024x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Sikkanam Travel Planner on Desktop"
+    },
+    {
+      "src": "/screenshot-mobile.jpg",
+      "sizes": "458x1024",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Sikkanam Travel Planner on Mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Planner",
+      "short_name": "AI Planner",
+      "description": "Plan a trip using AI",
+      "url": "/ai",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+    }
   ]
 }
