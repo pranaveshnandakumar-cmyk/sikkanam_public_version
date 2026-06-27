@@ -74,6 +74,14 @@ function MapBoundsController({ source, destination, routeGeometry }: Props) {
     }
   }, [source, destination, routeGeometry, map]);
 
+  useEffect(() => {
+    // Invalidate map size to trigger correct tile rendering if dimensions changed
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map, source, destination]);
+
   return null;
 }
 

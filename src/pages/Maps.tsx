@@ -874,7 +874,7 @@ export default function Maps() {
       </div>
 
       {/* Main Map component (takes full screen on desktop, flex-1 on mobile to share space with stats) */}
-      <div className="w-full flex-1 relative z-10">
+      <div className="w-full flex-1 md:h-full relative z-10">
         <SikkanamMap
           source={source}
           destination={destination}
