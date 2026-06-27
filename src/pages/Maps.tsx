@@ -15,7 +15,8 @@ import {
   Train,
   Car,
   X,
-  AlertCircle
+  AlertCircle,
+  Search
 } from "lucide-react";
 
 interface LocationInfo {
@@ -68,7 +69,7 @@ export default function Maps() {
     if (destinationId) {
       const match = tnDestinations.find((d) => d.id === destinationId);
       if (match) {
-        const loc = { name: match.name, lat: match.lat, lng: match.lng };
+        const loc = { name: `📍 ${match.name}`, lat: match.lat, lng: match.lng };
         setDestination(loc);
         setDestInput(match.name);
       }
@@ -154,7 +155,120 @@ export default function Maps() {
     getRoute();
   }, [source, destination]);
 
-  // Handle Search Input Geocoding (local tnDestinations + Nominatim fallback)
+  // Auto-fetch geolocation on component mount if no source is set
+  useEffect(() => {
+    if (!source && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const myLoc = { name: "📍 Current Location", lat, lng };
+          setSource(myLoc);
+          setSourceInput("Current Location");
+        },
+        (error) => {
+          console.warn("Auto-geolocation on mount failed or denied:", error);
+        }
+      );
+    }
+  }, []);
+
+  // Perform geocode for a given text query (returns list of matches)
+  const performGeocode = async (query: string): Promise<LocationInfo[]> => {
+    if (!query.trim()) return [];
+
+    // 1. Search local tnDestinations database first (immediate response)
+    const localMatches = tnDestinations
+      .filter((d) =>
+        d.name.toLowerCase().includes(query.toLowerCase()) ||
+        d.fullName.toLowerCase().includes(query.toLowerCase()) ||
+        d.district.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 2)
+      .map((d) => ({ name: `📍 ${d.name}`, lat: d.lat, lng: d.lng }));
+
+    if (localMatches.length > 0) {
+      return localMatches;
+    }
+
+    // 2. Fetch external address via OSM Nominatim API bounded to Tamil Nadu/South India
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        query
+      )}&format=json&limit=3&countrycodes=in&viewbox=75.0,8.0,81.5,14.0&bounded=1`
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+
+    return data.map((item: any) => {
+      const parts = item.display_name.split(",");
+      const displayName = parts.slice(0, 3).join(",").trim();
+      return {
+        name: `📍 ${displayName}`,
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+      };
+    });
+  };
+
+  // Submit handler to parse text and calculate distance / routing
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMsg("");
+    setIsLoadingRoute(true);
+
+    const stripPrefix = (name: string) => name.replace(/^[^\s]+\s/, "");
+
+    const isSourceDirty = !source || (sourceInput !== "Current Location" && sourceInput !== stripPrefix(source.name));
+    const isDestDirty = !destination || (destInput !== "Current Location" && destInput !== stripPrefix(destination.name));
+
+    try {
+      let finalSource = source;
+      let finalDest = destination;
+
+      // Geocode source if input changed or not set
+      if (isSourceDirty) {
+        if (sourceInput.trim()) {
+          const results = await performGeocode(sourceInput);
+          if (results.length > 0) {
+            finalSource = results[0];
+            setSource(finalSource);
+            setSourceInput(stripPrefix(finalSource.name));
+          } else {
+            throw new Error(`Could not find starting point: "${sourceInput}"`);
+          }
+        } else {
+          throw new Error("Please enter a starting point.");
+        }
+      }
+
+      // Geocode destination if input changed or not set
+      if (isDestDirty) {
+        if (destInput.trim()) {
+          const results = await performGeocode(destInput);
+          if (results.length > 0) {
+            finalDest = results[0];
+            setDestination(finalDest);
+            setDestInput(stripPrefix(finalDest.name));
+          } else {
+            throw new Error(`Could not find destination: "${destInput}"`);
+          }
+        } else {
+          throw new Error("Please enter a destination.");
+        }
+      }
+
+      setShowSourceDropdown(false);
+      setShowDestDropdown(false);
+    } catch (err: any) {
+      console.error("Form submit geocoding error:", err);
+      setErrorMsg(err.message || "Failed to resolve locations.");
+    } finally {
+      setIsLoadingRoute(false);
+    }
+  };
+
+  // Handle Search Input Autocomplete (local + debounced Nominatim)
   const handleGeocodeSearch = (
     query: string,
     isSource: boolean,
@@ -176,7 +290,7 @@ export default function Maps() {
       return;
     }
 
-    // 1. Search local tnDestinations database first (immediate response)
+    // Search local tnDestinations database (instant suggestions)
     const localMatches = tnDestinations
       .filter((d) =>
         d.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -189,13 +303,13 @@ export default function Maps() {
     suggestionsSetter(localMatches);
     dropdownOpenSetter(localMatches.length > 0);
 
-    // 2. Debounced API call to OSM Nominatim for custom locations in India / Tamil Nadu
+    // Debounced API call to OSM Nominatim
     debounceRef.current = setTimeout(async () => {
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
             query
-          )}&format=json&limit=5&countrycodes=in&viewbox=75.0,8.0,81.5,14.0&bounded=1`
+          )}&format=json&limit=4&countrycodes=in&viewbox=75.0,8.0,81.5,14.0&bounded=1`
         );
         if (!response.ok) return;
         const data = await response.json();
@@ -210,11 +324,9 @@ export default function Maps() {
           };
         });
 
-        // Combine local results (high priority) with API matches
         suggestionsSetter((prev) => {
           const combined = [...prev];
           apiMatches.forEach((apiItem: LocationInfo) => {
-            // Check if already in combined list to prevent duplicates
             const exists = combined.some(
               (p) => Math.abs(p.lat - apiItem.lat) < 0.001 && Math.abs(p.lng - apiItem.lng) < 0.001
             );
@@ -285,19 +397,16 @@ export default function Maps() {
 
   // Calculate local budget transport estimates based on exact route distance
   const getTransitEstimates = (distanceKm: number): TransportEstimate[] => {
-    // 1. Train Estimate (Sleeper Class / General average in Tamil Nadu)
     const trainSpeed = 55; // km/h
     const trainRate = 0.6; // ₹ per km
     const trainHours = Math.max(1, Math.round(distanceKm / trainSpeed));
     const trainCost = Math.max(65, Math.round(distanceKm * trainRate));
 
-    // 2. TNSTC Bus Estimate (Ordinary / Express average fare)
     const busSpeed = 45; // km/h
     const busRate = 1.35; // ₹ per km
     const busHours = Math.max(1, Math.round(distanceKm / busSpeed));
     const busCost = Math.max(50, Math.round(distanceKm * busRate));
 
-    // 3. Private Cab/Auto (Budget hatchback class)
     const cabSpeed = 60; // km/h
     const cabRate = 14.5; // ₹ per km
     const cabHours = Math.max(1, Math.round(distanceKm / cabSpeed));
@@ -310,7 +419,7 @@ export default function Maps() {
         icon: Train,
         duration: `${trainHours} hrs`,
         cost: `₹${trainCost.toLocaleString("en-IN")}`,
-        colorClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400",
+        colorClass: "bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/10",
       },
       {
         mode: "TNSTC Bus",
@@ -318,7 +427,7 @@ export default function Maps() {
         icon: Bus,
         duration: `${busHours} hrs`,
         cost: `₹${busCost.toLocaleString("en-IN")}`,
-        colorClass: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400",
+        colorClass: "bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/10",
       },
       {
         mode: "Budget Cab",
@@ -326,18 +435,26 @@ export default function Maps() {
         icon: Car,
         duration: `${cabHours} hrs`,
         cost: `₹${cabCost.toLocaleString("en-IN")}`,
-        colorClass: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400",
+        colorClass: "bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/10",
       },
     ];
   };
 
   const transitEstimates = routeInfo ? getTransitEstimates(routeInfo.rawDistanceKm) : [];
 
+  const stripPrefix = (name: string) => name.replace(/^[^\s]+\s/, "");
+  const isSourceDirty = !source || (sourceInput !== "Current Location" && sourceInput !== stripPrefix(source.name));
+  const isDestDirty = !destination || (destInput !== "Current Location" && destInput !== stripPrefix(destination.name));
+  const showCalculateBtn = isSourceDirty || isDestDirty;
+
   return (
-    <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden">
-      {/* Floating control overlay panel */}
-      <div className="absolute top-4 left-4 z-[1000] w-[calc(100%-2rem)] sm:w-96 max-h-[calc(100vh-120px)] overflow-y-auto pointer-events-auto">
-        <div className="bg-card/90 dark:bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-elevated p-4 sm:p-5 space-y-4">
+    <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden flex flex-col md:block">
+      
+      {/* ========================================================================= */}
+      {/* DESKTOP SIDEBAR PANEL (visible on md and up) */}
+      {/* ========================================================================= */}
+      <div className="hidden md:block absolute top-4 left-4 z-[1000] w-96 max-h-[calc(100vh-120px)] overflow-y-auto pointer-events-auto">
+        <form onSubmit={handleSubmit} className="bg-card/90 dark:bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-elevated p-5 space-y-4">
           
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-border/50 pb-3">
@@ -363,10 +480,11 @@ export default function Maps() {
                 </label>
                 {source && (
                   <button
+                    type="button"
                     onClick={() => handleClear(true)}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                    className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                   >
-                    Clear <X className="w-3 h-3" />
+                    Clear <X className="w-2.5 h-2.5" />
                   </button>
                 )}
               </div>
@@ -382,6 +500,7 @@ export default function Maps() {
                   />
                   {sourceInput && (
                     <button
+                      type="button"
                       onClick={() => handleClear(true)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
@@ -390,6 +509,7 @@ export default function Maps() {
                   )}
                 </div>
                 <Button
+                  type="button"
                   variant="outline"
                   size="icon"
                   className="h-11 w-11 shrink-0 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 border-border transition-colors"
@@ -426,6 +546,7 @@ export default function Maps() {
             {/* Swap Button container */}
             <div className="flex justify-center -my-2">
               <Button
+                type="button"
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 rounded-full border-border/80 bg-background shadow-card hover:bg-accent hover:scale-105 active:scale-95 transition-all"
@@ -444,10 +565,11 @@ export default function Maps() {
                 </label>
                 {destination && (
                   <button
+                    type="button"
                     onClick={() => handleClear(false)}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                    className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                   >
-                    Clear <X className="w-3 h-3" />
+                    Clear <X className="w-2.5 h-2.5" />
                   </button>
                 )}
               </div>
@@ -462,6 +584,7 @@ export default function Maps() {
                 />
                 {destInput && (
                   <button
+                    type="button"
                     onClick={() => handleClear(false)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
@@ -495,11 +618,23 @@ export default function Maps() {
 
           </div>
 
+          {/* Calculate Route Submit Button */}
+          {showCalculateBtn && (
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-xl gradient-saffron text-white font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-card"
+              disabled={isLoadingRoute || !sourceInput.trim() || !destInput.trim()}
+            >
+              <Search className="w-4 h-4" />
+              {isLoadingRoute ? "Searching..." : "Calculate Route"}
+            </Button>
+          )}
+
           {/* Loader */}
           {isLoadingRoute && (
-            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span>Calculating exact route...</span>
+              <span>Calculating route...</span>
             </div>
           )}
 
@@ -512,7 +647,7 @@ export default function Maps() {
           )}
 
           {/* Exact Distance display & transport breakdown card */}
-          {routeInfo && (
+          {routeInfo && !isLoadingRoute && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
               
               {/* Exact Stats Display */}
@@ -543,7 +678,6 @@ export default function Maps() {
                 
                 <div className="grid grid-cols-1 gap-2">
                   {transitEstimates.map((item, idx) => {
-                    const IconComp = item.icon;
                     return (
                       <div
                         key={idx}
@@ -580,17 +714,220 @@ export default function Maps() {
             </div>
           )}
 
-        </div>
+        </form>
       </div>
 
-      {/* Main Map component */}
-      <div className="w-full h-full">
+      {/* ========================================================================= */}
+      {/* MOBILE OVERLAYS (visible below md) */}
+      {/* ========================================================================= */}
+      
+      {/* Mobile Top Inputs Panel */}
+      <div className="md:hidden p-3 bg-background border-b border-border z-40">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-card dark:bg-card/95 border border-border/80 rounded-xl shadow-sm p-3 relative space-y-2.5"
+        >
+          {/* Double Inputs Flow */}
+          <div className="flex flex-col gap-2">
+            
+            {/* Source Row */}
+            <div className="relative flex items-center gap-2">
+              <div className="relative flex-1">
+                <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                <Input
+                  className="pl-8 pr-7 py-1 h-9 text-xs bg-background/50 border-border"
+                  placeholder="Starting Point..."
+                  value={sourceInput}
+                  onChange={(e) => handleGeocodeSearch(e.target.value, true, sourceDebounceTimer)}
+                  onFocus={() => setShowSourceDropdown(sourceSuggestions.length > 0)}
+                />
+                {sourceInput && (
+                  <button
+                    type="button"
+                    onClick={() => handleClear(true)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-lg border-border"
+                onClick={handleMyLocation}
+                title="Current Location"
+              >
+                <Crosshair className="w-3.5 h-3.5 text-emerald-500" />
+              </Button>
+            </div>
+
+            {/* Suggestions Overlay Source */}
+            {showSourceDropdown && sourceSuggestions.length > 0 && (
+              <div className="relative">
+                <div className="fixed inset-0 z-40" onClick={() => setShowSourceDropdown(false)} />
+                <ul className="absolute left-0 right-0 mt-0.5 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-36 overflow-y-auto py-1 divide-y divide-border/10">
+                  {sourceSuggestions.map((s, idx) => (
+                    <li
+                      key={idx}
+                      className="px-3 py-2 text-xs hover:bg-accent/80 cursor-pointer text-left"
+                      onClick={() => {
+                        setSource(s);
+                        setSourceInput(s.name.replace(/^[^\s]+\s/, ""));
+                        setShowSourceDropdown(false);
+                      }}
+                    >
+                      {s.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Destination Row */}
+            <div className="relative flex items-center gap-2">
+              <div className="relative flex-1">
+                <Navigation className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
+                <Input
+                  className="pl-8 pr-7 py-1 h-9 text-xs bg-background/50 border-border"
+                  placeholder="Destination Point..."
+                  value={destInput}
+                  onChange={(e) => handleGeocodeSearch(e.target.value, false, destDebounceTimer)}
+                  onFocus={() => setShowDestDropdown(destSuggestions.length > 0)}
+                />
+                {destInput && (
+                  <button
+                    type="button"
+                    onClick={() => handleClear(false)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-lg border-border"
+                onClick={handleSwap}
+                title="Swap routes"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+              </Button>
+            </div>
+
+            {/* Suggestions Overlay Dest */}
+            {showDestDropdown && destSuggestions.length > 0 && (
+              <div className="relative">
+                <div className="fixed inset-0 z-40" onClick={() => setShowDestDropdown(false)} />
+                <ul className="absolute left-0 right-0 mt-0.5 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-36 overflow-y-auto py-1 divide-y divide-border/10">
+                  {destSuggestions.map((s, idx) => (
+                    <li
+                      key={idx}
+                      className="px-3 py-2 text-xs hover:bg-accent/80 cursor-pointer text-left"
+                      onClick={() => {
+                        setDestination(s);
+                        setDestInput(s.name.replace(/^[^\s]+\s/, ""));
+                        setShowDestDropdown(false);
+                      }}
+                    >
+                      {s.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          </div>
+
+          {/* Mobile Submit Button */}
+          {showCalculateBtn && (
+            <Button
+              type="submit"
+              size="sm"
+              className="w-full h-8.5 text-xs rounded-lg gradient-saffron text-white font-medium flex items-center justify-center gap-1.5 shadow-card"
+              disabled={isLoadingRoute || !sourceInput.trim() || !destInput.trim()}
+            >
+              <Search className="w-3.5 h-3.5" />
+              {isLoadingRoute ? "Searching..." : "Calculate Route"}
+            </Button>
+          )}
+
+          {/* Mobile Loader / Error */}
+          {isLoadingRoute && (
+            <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground py-0.5">
+              <div className="w-3.5 h-3.5 border border-primary border-t-transparent rounded-full animate-spin" />
+              <span>Routing...</span>
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="flex gap-1.5 bg-destructive/10 text-destructive text-[10px] border border-destructive/20 rounded-lg p-2 items-center">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{errorMsg}</span>
+            </div>
+          )}
+
+        </form>
+      </div>
+
+      {/* Main Map component (takes full screen on desktop, flex-1 on mobile to share space with stats) */}
+      <div className="w-full flex-1 relative z-10">
         <SikkanamMap
           source={source}
           destination={destination}
           routeGeometry={routeGeometry}
         />
       </div>
+
+      {/* Mobile Bottom Stats & Transit Panel (only shown when routeInfo is available) */}
+      {routeInfo && !isLoadingRoute && (
+        <div className="md:hidden bg-background border-t border-border p-3 z-40 max-h-[45vh] overflow-y-auto space-y-3">
+          
+          {/* Distance and Duration summary */}
+          <div className="flex justify-between items-center bg-primary/5 dark:bg-primary/10 rounded-xl p-2.5 border border-primary/20">
+            <div>
+              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Exact Distance</p>
+              <p className="text-base font-extrabold text-primary leading-none mt-1">{routeInfo.distance}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-semibold">Travel Duration</p>
+              <p className="text-xs font-bold text-foreground leading-none mt-1 flex items-center gap-1 justify-end">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" /> {routeInfo.duration}
+              </p>
+            </div>
+          </div>
+
+          {/* Horizontal scroll transit estimates */}
+          <div className="space-y-1.5">
+            <h4 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Tamil Nadu Transit Estimator</h4>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {transitEstimates.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col justify-between p-2.5 rounded-xl border shrink-0 w-32 ${item.colorClass}`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg">{item.emoji}</span>
+                    <span className="text-[10px] font-bold text-foreground truncate">{item.mode}</span>
+                  </div>
+                  <div className="mt-2 text-left">
+                    <p className="text-xs font-extrabold text-foreground">{item.cost}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">{item.duration}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[8px] text-muted-foreground italic leading-tight text-left">
+              * Fares based on standard TNSTC (₹1.35/km), Train (₹0.6/km) & Cab (₹14.5/km) averages.
+            </p>
+          </div>
+
+        </div>
+      )}
+
     </div>
   );
 }

@@ -94,7 +94,7 @@ export default function SikkanamMap({ source, destination, routeGeometry }: Prop
       center={initialCenter}
       zoom={initialZoom}
       style={{
-        height: "calc(100vh - 80px)",
+        height: "100%",
         width: "100%",
         borderRadius: "20px",
       }}
