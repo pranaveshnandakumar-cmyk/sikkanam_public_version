@@ -423,7 +423,14 @@ export default function Maps() {
 
     // Dynamic Bus frequency
     let busFrequency = "Hourly service (Inter-city)";
-    if (distanceKm <= 60) {
+    let busDurationStr = `${busHours} hrs`;
+    let busCostStr = `₹${busCost.toLocaleString("en-IN")}`;
+
+    if (distanceKm < 3) {
+      busDurationStr = "N/A";
+      busCostStr = "N/A";
+      busFrequency = "Too short for bus (Use local auto/walk)";
+    } else if (distanceKm <= 60) {
       busFrequency = "Every 15–30 mins (Frequent)";
     } else if (distanceKm <= 180) {
       busFrequency = "Every 45–60 mins";
@@ -433,12 +440,32 @@ export default function Maps() {
 
     // Dynamic Train frequency/timings
     const destName = destination?.name.toLowerCase() || "";
+    const cleanedDestName = destName.replace(/^[^\s]+\s/, "").trim();
+    const dbDest = tnDestinations.find((d) => 
+      d.name.toLowerCase() === cleanedDestName ||
+      d.fullName.toLowerCase().includes(cleanedDestName) ||
+      cleanedDestName.includes(d.name.toLowerCase())
+    );
+
+    // Default to false for custom search locations to avoid randomly showing train routes
+    const hasRailAccess = dbDest ? dbDest.hasRailAccess : false;
+    const nearestStation = dbDest ? dbDest.nearestStation : "";
+
     const isHillStationNoDirectRail = ["ooty", "kodaikanal", "kodai", "yercaud", "valparai", "coonoor", "kolli hills"].some(
       (hill) => destName.includes(hill)
     );
 
     let trainFrequency = "2–4 trains/day (Exp/SF)";
-    if (isHillStationNoDirectRail) {
+    let trainDurationStr = `${trainHours} hrs`;
+    let trainCostStr = `₹${trainCost.toLocaleString("en-IN")}`;
+
+    if (!hasRailAccess) {
+      trainDurationStr = "N/A";
+      trainCostStr = "N/A";
+      trainFrequency = dbDest 
+        ? (nearestStation ? `No direct rail (Connect at ${nearestStation})` : "No direct rail access")
+        : "No direct rail (Custom Location)";
+    } else if (isHillStationNoDirectRail) {
       trainFrequency = "No direct route (Requires connecting station)";
     } else if (distanceKm <= 160) {
       trainFrequency = "1–2 trains/day (Local/Pass)";
@@ -451,8 +478,8 @@ export default function Maps() {
         mode: "Express Train",
         emoji: "🚂",
         icon: Train,
-        duration: `${trainHours} hrs`,
-        cost: `₹${trainCost.toLocaleString("en-IN")}`,
+        duration: trainDurationStr,
+        cost: trainCostStr,
         colorClass: "bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/10",
         frequency: trainFrequency,
       },
@@ -460,8 +487,8 @@ export default function Maps() {
         mode: "TNSTC Bus",
         emoji: "🚌",
         icon: Bus,
-        duration: `${busHours} hrs`,
-        cost: `₹${busCost.toLocaleString("en-IN")}`,
+        duration: busDurationStr,
+        cost: busCostStr,
         colorClass: "bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/10",
         frequency: busFrequency,
       },
